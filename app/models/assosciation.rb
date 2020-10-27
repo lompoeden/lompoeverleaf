@@ -1,0 +1,2 @@
+class Assosciation < ApplicationRecord
+end
