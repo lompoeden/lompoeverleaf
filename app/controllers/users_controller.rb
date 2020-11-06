@@ -2,19 +2,25 @@ class UsersController < ApplicationController
   before_action :set_user, only: [:show, :edit, :update, :destroy]
 
   # GET /users
-  # GET /users.json
   def index
-    @users = User.all
+    if logged_in? && current_user.admin?
+      redirect_to admin_users_path
+    else
+      redirect_to new_session_path
+    end
   end
 
   # GET /users/1
-  # GET /users/1.json
   def show
   end
 
   # GET /users/new
   def new
-    @user = User.new
+    #if logged_in?
+      redirect_to tasks_path
+  #  else
+      @user = User.new
+    end
   end
 
   # GET /users/1/edit
@@ -22,42 +28,39 @@ class UsersController < ApplicationController
   end
 
   # POST /users
-  # POST /users.json
   def create
     @user = User.new(user_params)
-
-    respond_to do |format|
-      if @user.save
-        format.html { redirect_to @user, notice: 'User was successfully created.' }
-        format.json { render :show, status: :created, location: @user }
+    if @user.save
+      if logged_in? && current_user.admin
+        redirect_to admin_users_path
       else
-        format.html { render :new }
-        format.json { render json: @user.errors, status: :unprocessable_entity }
+        session[:user_id] = @user.id
+        redirect_to user_path(@user.id), notice: 'User was successfully created.'
       end
+    else
+      render :new
     end
   end
 
   # PATCH/PUT /users/1
-  # PATCH/PUT /users/1.json
   def update
-    respond_to do |format|
-      if @user.update(user_params)
-        format.html { redirect_to @user, notice: 'User was successfully updated.' }
-        format.json { render :show, status: :ok, location: @user }
+    if @user.update(user_params)
+      if current_user.admin
+        redirect_to admin_users_path, notice: 'User was successfully updated.'
       else
-        format.html { render :edit }
-        format.json { render json: @user.errors, status: :unprocessable_entity }
+        redirect_to @user, notice: 'User was successfully updated.'
       end
+    else
+      render :edit
     end
   end
 
   # DELETE /users/1
-  # DELETE /users/1.json
   def destroy
-    @user.destroy
-    respond_to do |format|
-      format.html { redirect_to users_url, notice: 'User was successfully destroyed.' }
-      format.json { head :no_content }
+    if @user.destroy
+      redirect_to admin_users_path, notice: 'User was successfully destroyed.'
+    else
+      redirect_to admin_users_path, notice: 'can not delete last admin'
     end
   end
 
@@ -67,8 +70,8 @@ class UsersController < ApplicationController
       @user = User.find(params[:id])
     end
 
-    # Only allow a list of trusted parameters through.
+    # Only allow a trusted parameter "white list" through.
     def user_params
-      params.fetch(:user, {})
-    end
+      params.require(:user).permit(:email, :username, :admin,:password, :password_confirmation)
+  
 end

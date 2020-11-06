@@ -1,4 +1,4 @@
-class AddTaskRefToAssociations < ActiveRecord::Migration[6.0]
+class AddTaskToAssociations < ActiveRecord::Migration[6.0]
   def change
     add_reference :associations, :task, null: false, foreign_key: true
   end
